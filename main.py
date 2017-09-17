@@ -37,7 +37,7 @@ def get_trees(_path):
             print(e)
         else:
             trees.append(tree)
-    print('trees generated')
+    print('for path %s trees generated' % path)
     return trees
 
 
@@ -62,21 +62,12 @@ def get_top_functions_names_in_path(path, top_size=10):
     return top_verbs
 
 
-wds = []
-projects = [
-    'django',
-    'flask',
-    'pyramid',
-    'reddit',
-    'requests',
-    'sqlalchemy',
-]
+def calculate_unique_words(projects, top_size=200):
+    top_names = []
+    for project in projects:
+        path = os.path.join('.', project)
+        top_names += get_top_functions_names_in_path(path)
 
-for project in projects:
-    path = os.path.join('.', project)
-    wds += get_top_functions_names_in_path(path)
-
-top_size = 200
-print('total %s words, %s unique' % (len(wds), len(set(wds))))
-for word, occurence in collections.Counter(wds).most_common(top_size):
-    print(word, occurence)
+    print('total %s words, %s unique' % (len(top_names), len(set(top_names))))
+    for word, occurence in collections.Counter(top_names).most_common(top_size):
+        print(word, occurence)
