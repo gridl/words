@@ -10,11 +10,11 @@ def flat(_list):
     return sum([list(item) for item in _list], [])
 
 
-def is_verb(word):
+def is_word(word, part):
     if not word:
         return False
-    pos_info = pos_tag([word])
-    return pos_info[0][1] == 'VBZ'
+    pos_info = pos_tag([word], tagset='universal')
+    return pos_info[0][1] == part
 
 
 def get_trees(_path):
@@ -45,29 +45,51 @@ def get_functions_names(tree):
     return [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]  # noqa
 
 
-def get_verbs_from_function_name(function_name):
-    return [word for word in function_name.split('_') if is_verb(word)]
+def get_words_from_function_name(function_name, part):
+    return [word for word in function_name.split('_') if is_word(word, part)]
 
 
-def get_top_functions_names_in_path(path, top_size=10):
+def get_top_functions_names_in_path(path, part, top_size=10):
     trees = [t for t in get_trees(path) if t]
     verbs = []
     for t in trees:
         for node in get_functions_names(t):
             fnc_name = node.name.lower()
             if not (fnc_name.startswith('__') and fnc_name.endswith('__')):
-                verbs += get_verbs_from_function_name(fnc_name)
+                verbs += get_words_from_function_name(fnc_name, part)
     print('verbs from functions names extracted')
     top_verbs = collections.Counter(verbs).most_common(top_size)
     return top_verbs
 
 
-def calculate_unique_words(projects, top_size=200):
-    top_names = []
-    for project in projects:
-        path = os.path.join('.', project)
-        top_names += get_top_functions_names_in_path(path)
+parts = {
+    1: 'VERB',
+    2: 'NOUN',
+    3: 'ADJ'
+}
 
-    print('total %s words, %s unique' % (len(top_names), len(set(top_names))))
-    for word, occurence in collections.Counter(top_names).most_common(top_size):
+
+def main():
+    def unvalid():
+        print("Enter valid choice")
+        return
+
+    path = input("Enter the path of your project: ")
+    try:
+        part_of_sentence = int(input("1. Verb, 2. Noun, 3. ADJ: "))
+    except ValueError:
+        unvalid()
+    try:
+        part_of_sentence = parts[part_of_sentence]
+    except KeyError:
+        unvalid()
+
+    wds = get_top_functions_names_in_path(path, part_of_sentence)
+
+    print('top 10 words in your projects')
+    print('total %s words, %s unique' % (len(wds), len(set(wds))))
+    for word, occurence in wds:
         print(word, occurence)
+
+if __name__ == "__main__":
+    main()
